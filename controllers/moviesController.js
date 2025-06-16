@@ -106,9 +106,24 @@ const update = (req, res) => {
   );
 };
 
+const destroy = (req, res) => {
+  const movieId = req.params.id;
+
+  db.query("DELETE FROM movies WHERE id = ?", [movieId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: "Database query failed" });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: "Movie not found" });
+    }
+    res.status(204).json({ message: "Movie deleted successfully" });
+  });
+};
+
 module.exports = {
   index,
   show,
   store,
   update,
+  destroy,
 };
