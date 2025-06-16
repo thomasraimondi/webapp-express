@@ -73,8 +73,42 @@ const store = (req, res) => {
   );
 };
 
+const update = (req, res) => {
+  const movieId = req.params.id;
+  const { title, abstract, description, director, genre, release_year, image } =
+    req.body;
+
+  if (!title || !director) {
+    return res.status(400).json({ error: "bad request" });
+  }
+
+  const values = [
+    title,
+    director,
+    abstract ?? null,
+    genre ?? null,
+    release_year ?? null,
+    image ?? null,
+    movieId,
+  ];
+
+  db.query(
+    "UPDATE movies SET title = ?, director = ?, abstract = ?, genre = ?, release_year = ?, image = ? WHERE id = ?",
+    values,
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Database query failed" });
+      }
+      res
+        .status(200)
+        .json({ message: "Movie updated successfully", id: movieId, values });
+    }
+  );
+};
+
 module.exports = {
   index,
   show,
   store,
+  update,
 };
