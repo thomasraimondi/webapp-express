@@ -6,11 +6,19 @@ const db = require("./data/db");
 const app = express();
 const config = process.env;
 
+app.use(express.static("public"));
+app.use(express.json());
+
 app.get("/", (req, res) => {
   db.query("SELECT * FROM movies", (err, results) => {
     if (err) {
       return res.status(500).json({ error: "Database query failed" });
     }
+    movies = results.map((movie) => {
+      movie.image = `${config.APP_URL}:${config.APP_PORT}/img/movies_cover/${movie.image}`;
+      return movie;
+    });
+
     res.json({ results });
   });
 });
@@ -26,6 +34,8 @@ app.get("/:id", (req, res) => {
     }
 
     const movie = results[0];
+    movie.image = `${config.APP_URL}:${config.APP_PORT}/img/movies_cover/${movie.image}`;
+
     db.query(
       "SELECT * FROM reviews WHERE movie_id = ?",
       [movieId],
