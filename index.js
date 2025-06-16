@@ -2,6 +2,7 @@ const express = require("express");
 require("dotenv").config();
 const { notFount, errorHandler } = require("./middlewares/errorHandler");
 const movieRoute = require("./routers/movieRoute");
+const reviewRoute = require("./routers/reviewRoute");
 
 const app = express();
 const config = process.env;
@@ -10,6 +11,7 @@ app.use(express.static("public"));
 app.use(express.json());
 
 app.use("/movies", movieRoute);
+app.use("/reviews", reviewRoute);
 
 app.use(notFount);
 app.use(errorHandler);

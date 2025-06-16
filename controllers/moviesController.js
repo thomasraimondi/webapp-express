@@ -42,7 +42,39 @@ const show = (req, res) => {
   });
 };
 
+const store = (req, res) => {
+  const { title, abstract, description, director, genre, release_year, image } =
+    req.body;
+  console.log(req.body);
+
+  if (!title || !director) {
+    return res.status(400).json({ error: "bad request" });
+  }
+  const values = [
+    title,
+    director,
+    abstract ?? null,
+    genre ?? null,
+    release_year ?? null,
+    image ?? null,
+  ];
+
+  console.log(values);
+
+  db.query(
+    "INSERT INTO movies (title, director, abstract, genre, release_year, image) VALUES (?, ?, ?, ?, ?, ?)",
+    values,
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Database query failed" });
+      }
+      res.status(201).json({ id: results.insertId, values });
+    }
+  );
+};
+
 module.exports = {
   index,
   show,
+  store,
 };
