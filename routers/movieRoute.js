@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const moviesController = require("../controllers/moviesController");
+const upload = require("../middlewares/multer");
 
 router.get("/", moviesController.index);
 router.get("/:id", moviesController.show);
-router.post("/", moviesController.store);
+router.post("/", upload.single("image"), moviesController.store);
 router.put("/:id", moviesController.update);
 router.delete("/:id", moviesController.destroy);
 
