@@ -2,17 +2,20 @@ const db = require("../data/db");
 const config = process.env;
 
 const index = (req, res) => {
-  db.query("SELECT * FROM movies", (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: "Database query failed" });
-    }
-    movies = results.map((movie) => {
-      movie.image = `${config.APP_URL}:${config.APP_PORT}/img/movies_cover/${movie.image}`;
-      return movie;
-    });
+  db.query(
+    "SELECT movies.*,avg(reviews.vote) AS avg_vote_movie, COUNT(reviews.id) AS n_reviewes FROM movies LEFT JOIN reviews ON movies.id = reviews.movie_id GROUP BY movies.id",
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Database query failed" });
+      }
+      movies = results.map((movie) => {
+        movie.image = `${config.APP_URL}:${config.APP_PORT}/img/movies_cover/${movie.image}`;
+        return movie;
+      });
 
-    res.json({ results });
-  });
+      res.json({ results });
+    }
+  );
 };
 
 const show = (req, res) => {
@@ -29,17 +32,45 @@ const show = (req, res) => {
     movie.image = `${config.APP_URL}:${config.APP_PORT}/img/movies_cover/${movie.image}`;
 
     db.query(
-      "SELECT * FROM reviews WHERE movie_id = ?",
+      "SELECT * FROM reviews WHERE movie_id = ? ORDER BY created_at DESC",
       [movieId],
-      (err, reviews) => {
+      (err, results) => {
         if (err) {
           return res.status(500).json({ error: "Database query failed" });
         }
-        movie.reviews = reviews;
+        movie.reviews = results;
+      }
+    );
+
+    db.query(
+      "SELECT avg(vote) AS avg_vote_movie FROM reviews where movie_id= ? group by movie_id",
+      [movieId],
+      (err, results) => {
+        if (err) {
+          return res.status(500).json({ error: "Database query failed" });
+        }
+        const avgVote = results.length > 0 ? results[0].avg_vote_movie : null;
+        movie.avg_vote = parseFloat(avgVote);
+
         res.json({ movie });
       }
     );
   });
+};
+
+const rating = (req, res) => {
+  const movieId = req.params.id;
+  db.query(
+    "SELECT avg(vote) AS avg_vote_movie FROM reviews where movie_id= ? group by movie_id",
+    [movieId],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Database query failed" });
+      }
+      const avgVote = results.length > 0 ? results[0].avg_vote_movie : null;
+      res.json({ avg_vote: parseFloat(avgVote) });
+    }
+  );
 };
 
 const store = (req, res) => {
@@ -126,4 +157,5 @@ module.exports = {
   store,
   update,
   destroy,
+  rating,
 };
