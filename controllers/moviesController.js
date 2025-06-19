@@ -20,50 +20,57 @@ const index = (req, res) => {
 
 const show = (req, res) => {
   movieId = req.params.id;
-  db.query("SELECT * FROM movies WHERE id = ?", [movieId], (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: "Database query failed" });
-    }
-    if (results.length === 0) {
-      return res.status(404).json({ error: "Movie not found" });
-    }
 
-    const movie = results[0];
-    movie.image = `${config.APP_URL}:${config.APP_PORT}/img/movies_cover/${movie.image}`;
-
-    db.query(
-      "SELECT * FROM reviews WHERE movie_id = ? ORDER BY created_at DESC",
-      [movieId],
-      (err, results) => {
-        if (err) {
-          return res.status(500).json({ error: "Database query failed" });
-        }
-        movie.reviews = results;
+  db.query(
+    "SELECT movies.*,avg(reviews.vote) AS avg_vote_movie, COUNT(reviews.id) AS n_reviewes FROM movies LEFT JOIN reviews ON movies.id = reviews.movie_id WHERE movies.id = ? GROUP BY movies.id",
+    [movieId],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Database query failed" });
       }
-    );
-
-    db.query(
-      "SELECT avg(vote) AS avg_vote_movie FROM reviews where movie_id= ? group by movie_id",
-      [movieId],
-      (err, results) => {
-        if (err) {
-          return res.status(500).json({ error: "Database query failed" });
-        }
-        const avgVote = results.length > 0 ? results[0].avg_vote_movie : null;
-        movie.avg_vote = parseFloat(avgVote);
-
-        res.json({ movie });
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Movie not found" });
       }
-    );
-  });
+
+      const movie = results[0];
+      movie.image = `${config.APP_URL}:${config.APP_PORT}/img/movies_cover/${movie.image}`;
+
+      db.query(
+        "SELECT * FROM reviews WHERE movie_id = ? ORDER BY created_at DESC",
+        [movieId],
+        (err, results) => {
+          if (err) {
+            return res.status(500).json({ error: "Database query failed" });
+          }
+          movie.reviews = results;
+          res.json({ movie });
+        }
+      );
+    }
+  );
 };
 
 const store = (req, res) => {
-  const { title, abstract, director, genre, release_year, image } = req.body;
-  const { filename } = req.file;
+  const { title, abstract, director, genre, release_year } = req.body;
 
-  if (!title || !director) {
-    return res.status(400).json({ error: "bad request" });
+  const { filename } = req.file;
+  const missFields = [];
+
+  const addMissField = (field) => {
+    missFields.push({
+      field: `${field}`,
+      message: `non è stato inserito ${field}`,
+    });
+  };
+
+  if (!title) {
+    addMissField(title);
+  }
+
+  if (missFields.length) {
+    return res
+      .status(400)
+      .json({ error: "bad request", errorField: { missFields } });
   }
   const values = [
     title,
