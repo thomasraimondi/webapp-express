@@ -13,7 +13,7 @@ const index = (req, res) => {
         return movie;
       });
 
-      res.json({ results });
+      res.json({ movies });
     }
   );
 };
@@ -58,25 +58,9 @@ const show = (req, res) => {
   });
 };
 
-const rating = (req, res) => {
-  const movieId = req.params.id;
-  db.query(
-    "SELECT avg(vote) AS avg_vote_movie FROM reviews where movie_id= ? group by movie_id",
-    [movieId],
-    (err, results) => {
-      if (err) {
-        return res.status(500).json({ error: "Database query failed" });
-      }
-      const avgVote = results.length > 0 ? results[0].avg_vote_movie : null;
-      res.json({ avg_vote: parseFloat(avgVote) });
-    }
-  );
-};
-
 const store = (req, res) => {
-  const { title, abstract, description, director, genre, release_year, image } =
-    req.body;
-  console.log(req.body);
+  const { title, abstract, director, genre, release_year, image } = req.body;
+  const { filename } = req.file;
 
   if (!title || !director) {
     return res.status(400).json({ error: "bad request" });
@@ -87,7 +71,7 @@ const store = (req, res) => {
     abstract ?? null,
     genre ?? null,
     release_year ?? null,
-    image ?? null,
+    filename,
   ];
 
   console.log(values);
@@ -97,7 +81,7 @@ const store = (req, res) => {
     values,
     (err, results) => {
       if (err) {
-        return res.status(500).json({ error: "Database query failed" });
+        return res.status(500).json({ error: "Database query failed", err });
       }
       res.status(201).json({ id: results.insertId, values });
     }
@@ -157,5 +141,4 @@ module.exports = {
   store,
   update,
   destroy,
-  rating,
 };
