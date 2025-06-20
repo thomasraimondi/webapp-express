@@ -14,11 +14,7 @@ const index = (req, res) => {
 const store = (req, res) => {
   const { movie_id, name, vote, text } = req.body;
 
-  if (!movie_id || !name || !vote || vote < 1 || vote > 5) {
-    return res.status(400).json({ error: "bad request" });
-  }
-
-  const values = [movie_id, name, vote, text ?? null];
+  const values = [movie_id, name, vote, text];
 
   db.query(
     `INSERT INTO reviews (movie_id, name, vote, text) VALUES (?, ?, ?, ?)`,
@@ -34,7 +30,7 @@ const store = (req, res) => {
           movie_id,
           name,
           vote,
-          text: text ?? null,
+          text,
         },
       });
     }
