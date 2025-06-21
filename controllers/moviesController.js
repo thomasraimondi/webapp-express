@@ -51,27 +51,13 @@ const show = (req, res) => {
 };
 
 const store = (req, res) => {
+  console.log(req.file);
+
   const { title, abstract, director, genre, release_year } = req.body;
-
-  const { filename } = req.file;
-  const missFields = [];
-
-  const addMissField = (field) => {
-    missFields.push({
-      field: `${field}`,
-      message: `non è stato inserito ${field}`,
-    });
-  };
-
-  if (!title) {
-    addMissField(title);
+  if (req.file) {
+    const { filename } = req.file;
   }
 
-  if (missFields.length) {
-    return res
-      .status(400)
-      .json({ error: "bad request", errorField: { missFields } });
-  }
   const values = [
     title,
     director,
